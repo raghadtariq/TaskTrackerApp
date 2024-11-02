@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Task Tracker</title>
+    <link rel="stylesheet" href="style.css">
+    <script>
+        async function addTask() {
+            const task = document.getElementById('taskInput').value;
+            const response = await fetch('/api/task', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ task })
+            });
+            const result = await response.text();
+            alert(result);
+            document.getElementById('taskInput').value = '';
+            loadTasks(); 
+        }
+
+        async function addTaskWithPriority() {
+            const task = document.getElementById('priorityTaskInput').value;
+            const priority = document.getElementById('priorityInput').value;
+            const response = await fetch('/api/task/priority', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ task, priority })
+            });
+            const result = await response.text();
+            alert(result);
+            document.getElementById('priorityTaskInput').value = '';
+            document.getElementById('priorityInput').value = '';
+            loadPriorityTasks(); 
+        }
+
+        async function loadTasks() {
+            const response = await fetch('/api/tasks');
+            const data = await response.json();
+            const taskList = document.getElementById('taskList');
+            taskList.innerHTML = '';
+            data.tasks.forEach(task => {
+                const li = document.createElement('li');
+                li.textContent = `Description: ${task.description}, Status: ${task.status}, Created At: ${task.created_at}`;
+                taskList.appendChild(li);
+            });
+        }
+
+        async function loadPriorityTasks() {
+            const response = await fetch('/api/tasks/priority');
+            const data = await response.json();
+            const priorityTaskList = document.getElementById('priorityTaskList');
+            priorityTaskList.innerHTML = '';
+            data.tasks.forEach(task => {
+                const li = document.createElement('li');
+                li.textContent = `Task: ${task.value}, Priority: ${task.score}`;
+                priorityTaskList.appendChild(li);
+            });
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>Task Tracker</h1>
+
+        <div class="task-input">
+            <input type="text" id="taskInput" placeholder="Enter task">
+            <button onclick="addTask()">Add Task</button>
+        </div>
+
+        <h2>Tasks:</h2>
+        <ul id="taskList"></ul>
+
+        <div class="priority-task-input">
+            <input type="text" id="priorityTaskInput" placeholder="Enter task with priority">
+            <input type="number" id="priorityInput" placeholder="Enter priority">
+            <button onclick="addTaskWithPriority()">Add Task with Priority</button>
+        </div>
+
+        <h2>Tasks with Priority:</h2>
+        <ul id="priorityTaskList"></ul>
+    </div>
+
+    <script>
+        loadTasks(); 
+        loadPriorityTasks(); 
+    </script>
+</body>
+</html>

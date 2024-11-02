@@ -1,0 +1,64 @@
+version: '3'
+services:
+  redis-master:
+    image: redis:6.0.7
+    container_name: redis-master
+    volumes:
+      - redis_master:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - tasktracker-network
+    restart: always
+
+  redis-slave1:
+    image: redis:6.0.7
+    container_name: redis-slave1
+    depends_on:
+      - redis-master
+    command: >
+      sh -c "until redis-cli -h redis-master ping; do sleep 1; done; 
+      redis-server --slaveof redis-master 6379"
+    networks:
+      - tasktracker-network
+    restart: always
+
+  redis-slave2:
+    image: redis:6.0.7
+    container_name: redis-slave2
+    depends_on:
+      - redis-master
+    command: >
+      sh -c "until redis-cli -h redis-master ping; do sleep 1; done; 
+      redis-server --slaveof redis-master 6379"
+    networks:
+      - tasktracker-network
+    restart: always
+
+  node-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - redis-master
+      - redis-slave1
+      - redis-slave2
+    environment:
+      REDIS_MASTER_HOST: redis-master
+      REDIS_MASTER_PORT: 6379
+      REDIS_SLAVE1_HOST: redis-slave1
+      REDIS_SLAVE1_PORT: 6379
+      REDIS_SLAVE2_HOST: redis-slave2
+      REDIS_SLAVE2_PORT: 6379
+    ports:
+      - "3000:3000"
+    networks:
+      - tasktracker-network
+
+volumes:
+  redis_master:
+  redis_slave:
+
+networks:
+  tasktracker-network:
+    driver: bridge
